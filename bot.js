@@ -1,12 +1,12 @@
 const mineflayer = require('mineflayer');
-// রাস্তা চিনে ফলো করার জন্য প্লাগইন
+// রাস্তা চিনে ফলো করার জন্য নতুন প্লাগইন ইম্পোর্ট করা হলো
 const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 const GoalFollow = goals.GoalFollow;
 
 const botOptions = {
     host: 'play.voidcraftbd.online',         // আপনার সার্ভার আইপি
     username: 'rohan_er_bot',                // বটের নাম
-    version: '1.21.11'                       // 🌟 একদম সঠিক সার্ভার ভার্সন সেট করা হলো
+    version: '1.21.11'                        // সার্ভার ভার্সন
 };
 
 const botPassword = 'RohanBot@123';          // বটের লগইন পাসওয়ার্ড
@@ -16,7 +16,7 @@ let bot;
 function createBot() {
     bot = mineflayer.createBot(botOptions);
 
-    // পাথফাইন্ডার প্লাগইন লোড করা
+    // পাথফাইন্ডার প্লাগইন বটের সাথে লোড করা
     bot.loadPlugin(pathfinder);
 
     // বট সফলভাবে জয়েন করলে অটো-লগইন
@@ -28,7 +28,7 @@ function createBot() {
         }, 2000);
     });
 
-    // চ্যাট মেসেজ রিড করে অটোমেটিক রেজিস্টার/লগইন এবং TP Accept করা
+    // সার্ভারের চ্যাট মেসেজ রিড করে অটোমেটিক রেজিস্টার/লগইন এবং TP Accept করা
     bot.on('message', (jsonMsg) => {
         const message = jsonMsg.toString();
         
@@ -40,16 +40,17 @@ function createBot() {
             bot.chat(`/login ${botPassword}`);
         }
 
-        // টিপি এক্সেপ্ট (TP Accept) করার সিস্টেম
+        // 🌟 টিপি এক্সেপ্ট (TP Accept) করার সিস্টেম
+        // কেউ টিপি রিকোয়েস্ট পাঠালে সার্ভার চ্যাটে সাধারণত 'has requested to teleport' বা 'tpa' লেখা আসে
         if (message.includes('requested to teleport') || message.includes('tpa') || message.includes('request')) {
             console.log('টিপি রিকোয়েস্ট পাওয়া গেছে! এক্সেপ্ট করা হচ্ছে...');
             setTimeout(() => {
                 bot.chat('/tpaccept');
-            }, 1500);
+            }, 1500); // ১.৫ সেকেন্ড পর অটোমেটিক এক্সেপ্ট করবে
         }
     });
 
-    // চ্যাট কমান্ডের মাধ্যমে ফলো (Follow) করার এআই সিস্টেম
+    // 🌟 চ্যাট কমান্ডের মাধ্যমে ফলো (Follow) করার এআই সিস্টেম
     bot.on('chat', (username, message) => {
         if (username === bot.username) return;
 
@@ -70,15 +71,18 @@ function createBot() {
 
             bot.chat(`ঠিক আছে ${username}, আমি আপনাকে ফলো করছি!`);
             
+            // বটের হাঁটার মুভমেন্ট সেটআপ
             const defaultMove = new Movements(bot);
             bot.pathfinder.setMovements(defaultMove);
+            
+            // প্লেয়ারের পেছনে ৩ ব্লক দূরত্ব বজায় রেখে ফলো করবে
             bot.pathfinder.setGoal(new GoalFollow(target, 3), true);
         }
 
         // ফলো করা বন্ধ করার কমান্ড (stop)
         else if (msg === 'stop' || msg === 'thak r asa lagbe nah') {
             bot.chat('আমি এখানে দাঁড়িয়ে গেলাম ভাই!');
-            bot.pathfinder.setGoal(null);
+            bot.pathfinder.setGoal(null); // ফলো করা অফ করে দেবে
         }
     });
 
