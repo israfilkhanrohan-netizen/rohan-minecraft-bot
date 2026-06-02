@@ -1,42 +1,92 @@
 const mineflayer = require('mineflayer');
+// রাস্তা চিনে ফলো করার জন্য নতুন প্লাগইন ইম্পোর্ট করা হলো
+const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
+const GoalFollow = goals.GoalFollow;
 
-// আপনার সার্ভারের ইনফরমেশন এবং নতুন বটের নাম সেট করা হয়েছে
 const botOptions = {
     host: 'play.voidcraftbd.online',         // আপনার সার্ভার আইপি
-    username: 'rohan_er_bot',                // বটের নতুন নাম
-    version: '1.21.1'                        // আপনার সার্ভার ভার্সন
+    username: 'rohan_er_bot',                // বটের নাম
+    version: '1.21.1'                        // সার্ভার ভার্সন
 };
+
+const botPassword = 'RohanBot@123';          // বটের লগইন পাসওয়ার্ড
 
 let bot;
 
 function createBot() {
     bot = mineflayer.createBot(botOptions);
 
-    // বট সাকসেসফুলি সার্ভারে জয়েন করলে
+    // পাথফাইন্ডার প্লাগইন বটের সাথে লোড করা
+    bot.loadPlugin(pathfinder);
+
+    // বট সফলভাবে জয়েন করলে অটো-লগইন
     bot.on('spawn', () => {
         console.log(`${bot.username} সফলভাবে voidcraftbd সার্ভারে জয়েন করেছে!`);
+        setTimeout(() => {
+            bot.chat(`/login ${botPassword}`);
+            bot.chat(`/register ${botPassword} ${botPassword}`);
+        }, 2000);
     });
 
-    // কেউ চ্যাটে কিছু লিখলে বটের এআই রিপ্লাই সিস্টেম
+    // সার্ভারের চ্যাট মেসেজ রিড করে অটোমেটিক রেজিস্টার/লগইন এবং TP Accept করা
+    bot.on('message', (jsonMsg) => {
+        const message = jsonMsg.toString();
+        
+        // অটো-লগইন সিস্টেম
+        if (message.includes('/register') || message.includes('register') || message.includes('reg')) {
+            bot.chat(`/register ${botPassword} ${botPassword}`);
+        }
+        if (message.includes('/login') || message.includes('login') || message.includes('log')) {
+            bot.chat(`/login ${botPassword}`);
+        }
+
+        // 🌟 টিপি এক্সেপ্ট (TP Accept) করার সিস্টেম
+        // কেউ টিপি রিকোয়েস্ট পাঠালে সার্ভার চ্যাটে সাধারণত 'has requested to teleport' বা 'tpa' লেখা আসে
+        if (message.includes('requested to teleport') || message.includes('tpa') || message.includes('request')) {
+            console.log('টিপি রিকোয়েস্ট পাওয়া গেছে! এক্সেপ্ট করা হচ্ছে...');
+            setTimeout(() => {
+                bot.chat('/tpaccept');
+            }, 1500); // ১.৫ সেকেন্ড পর অটোমেটিক এক্সেপ্ট করবে
+        }
+    });
+
+    // 🌟 চ্যাট কমান্ডের মাধ্যমে ফলো (Follow) করার এআই সিস্টেম
     bot.on('chat', (username, message) => {
-        // বট নিজে কিছু লিখলে যেন লুপে না পড়ে
         if (username === bot.username) return;
 
         const msg = message.toLowerCase();
 
-        // কাস্টম চ্যাট রেসপন্স
-        if (msg.includes('hello') || msg.includes('hlw') || msg.includes('hi')) {
-            bot.chat(`Hello ${username}! আমি rohan_er_bot, এই সার্ভারের ২৪/৭ এআই অ্যাসিস্ট্যান্ট।`);
+        // সাধারণ চ্যাট রিপ্লাই
+        if (msg === 'hello' || msg === 'hi' || msg === 'hlw') {
+            bot.chat(`Hello ${username}! আমি Rohan ভাইয়ের ২৪/৭ বট।`);
         } 
-        else if (msg.includes('help')) {
-            bot.chat('আমি সার্ভার পাহারা দিচ্ছি। যেকোনো সমস্যায় এডমিন Rohan ভাইকে নক দিন।');
+
+        // বটের পেছনে ঘুরে বেড়ানোর কমান্ড (follow)
+        else if (msg === 'follow' || msg === 'amar piche ay') {
+            const target = bot.players[username]?.entity;
+            if (!target) {
+                bot.chat(`দুঃখিত ${username}, আপনাকে তো আমি দেখতে পাচ্ছি না! আগে আমার কাছে টিপি (TP) করুন।`);
+                return;
+            }
+
+            bot.chat(`ঠিক আছে ${username}, আমি আপনাকে ফলো করছি!`);
+            
+            // বটের হাঁটার মুভমেন্ট সেটআপ
+            const defaultMove = new Movements(bot);
+            bot.pathfinder.setMovements(defaultMove);
+            
+            // প্লেয়ারের পেছনে ৩ ব্লক দূরত্ব বজায় রেখে ফলো করবে
+            bot.pathfinder.setGoal(new GoalFollow(target, 3), true);
         }
-        else if (msg.includes('rules')) {
-            bot.chat('নিয়মকানুন মেনে চলুন: হ্যাক বা ল্যাগ করা যাবে না, শান্তিতে খেলুন!');
+
+        // ফলো করা বন্ধ করার কমান্ড (stop)
+        else if (msg === 'stop' || msg === 'thak r asa lagbe nah') {
+            bot.chat('আমি এখানে দাঁড়িয়ে গেলাম ভাই!');
+            bot.pathfinder.setGoal(null); // ফলো করা অফ করে দেবে
         }
     });
 
-    // সার্ভার রিস্টার্ট বা কিক খেলে অটোমেটিক ৫ সেকেন্ড পর রিলগইন হবে
+    // ডিসকানেক্ট হলে অটো-রিলগইন
     bot.on('end', () => {
         console.log('সার্ভার থেকে ডিসকানেক্ট হয়েছে। ৫ সেকেন্ড পর আবার জয়েন করছে...');
         setTimeout(() => {
@@ -44,7 +94,6 @@ function createBot() {
         }, 5000);
     });
 
-    // কোনো এরর আসলে যেন স্ক্রিপ্ট ক্র্যাশ না করে
     bot.on('error', (err) => console.log('Error:', err));
 }
 

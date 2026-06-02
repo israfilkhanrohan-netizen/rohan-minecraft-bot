@@ -1,12 +1,13 @@
 {
   "name": "rohan-247-bot",
   "version": "1.0.0",
-  "description": "Minecraft 24/7 Bot named rohan_er_bot",
+  "description": "Minecraft 24/7 Bot with Auto Login, TP Accept, and Follow Feature",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js"
   },
   "dependencies": {
-    "mineflayer": "^4.22.0"
+    "mineflayer": "^4.22.0",
+    "mineflayer-pathfinder": "^2.4.5"
   }
 }
