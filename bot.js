@@ -5,7 +5,7 @@ const GoalFollow = goals.GoalFollow;
 
 const botOptions = {
     host: 'play.voidcraftbd.online',         // আপনার সার্ভার আইপি
-    username: 'rohan_er_bot',                // বটের নাম
+    username: 'rohan_helper',                // বটের নাম
     version: '1.21.11'                        // সার্ভার ভার্সন
 };
 
